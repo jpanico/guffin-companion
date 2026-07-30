@@ -55,7 +55,7 @@ text — the same log lines, gate findings, and traceback a terminal invocation 
 |---|---|---|
 | Server URL | `http://127.0.0.1:8077` | The colocated guffin-server |
 | Default export format | `markdown` | `markdown` / `pdf` / `epub` |
-| Default project type | `default` | `default` / `book` / `manuscript` |
+| Default project type | `article` | `article` / `book` / `manuscript` |
 | Request timeout (seconds) | `600` | Renders queue server-side and can take minutes |
 | Extra export request fields (JSON) | `{}` | Merged into every export request; the full field vocabulary is the server's `/openapi.json` |
 

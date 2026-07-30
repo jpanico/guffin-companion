@@ -11,7 +11,7 @@ const DEFAULT_SERVER_URL = "http://127.0.0.1:8077";
 const DEFAULT_TIMEOUT_SECONDS = 600; // renders can take minutes, and the server queues invocations
 const HEALTH_TIMEOUT_SECONDS = 10;
 const EXPORT_FORMATS = ["markdown", "pdf", "epub"];
-const PROJECT_TYPES = ["default", "book", "manuscript"];
+const PROJECT_TYPES = ["article", "book", "manuscript"];
 
 const SETTING_SERVER_URL = "server-url";
 const SETTING_DEFAULT_FORMAT = "default-format";
@@ -231,7 +231,7 @@ async function runExport(formatOverride) {
   }
   const body = {
     output_format: setting(SETTING_DEFAULT_FORMAT, "markdown"),
-    project_type: setting(SETTING_DEFAULT_TYPE, "default"),
+    project_type: setting(SETTING_DEFAULT_TYPE, "article"),
     ...parsedExtraFields(),
     ...(formatOverride ? { output_format: formatOverride } : {}),
     target: uid,
