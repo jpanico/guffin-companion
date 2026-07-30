@@ -384,13 +384,13 @@ async function runHealth() {
  * these labels, so an unload can never remove more (or fewer) than one load registered, and
  * removing an already-absent label is a no-op. */
 const COMMANDS = [
+  // Opening the dialog is instant, so it bypasses the single-flight guard; the guard applies
+  // when its Export button submits.
+  { label: OPTIONS_COMMAND_LABEL, run: () => showExportOptionsDialog(), unguarded: true },
   { label: "Guffin: Export current page/block", run: () => runExport(null) },
   { label: "Guffin: Export current page/block as Markdown", run: () => runExport("markdown") },
   { label: "Guffin: Export current page/block as PDF", run: () => runExport("pdf") },
   { label: "Guffin: Export current page/block as EPUB", run: () => runExport("epub") },
-  // Opening the dialog is instant, so it bypasses the single-flight guard; the guard applies
-  // when its Export button submits.
-  { label: OPTIONS_COMMAND_LABEL, run: () => showExportOptionsDialog(), unguarded: true },
   { label: "Guffin: Dump current page/block", run: () => runDump() },
   { label: "Guffin: Server health", run: () => runHealth() },
 ];
