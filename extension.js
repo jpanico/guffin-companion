@@ -22,9 +22,12 @@ const SETTING_EXTRA_FIELDS = "extra-fields";
 const NO_TARGET_MESSAGE =
   "Open a page or zoom into a block first — the scrolling daily-notes view has no single export target.";
 
+/* The module object outlives an unload/load cycle (Roam re-imports a cached module), so this
+ * state is shared across loads. Nothing here may be a registry that onunload drains: the
+ * command set is the fixed COMMANDS list below, and onunload never nulls extensionAPI — a
+ * stale unload arriving after a fresh load must not disable the live one. */
 const state = {
   extensionAPI: null,
-  commandLabels: [],
   activeCommand: null,
   activeAbort: null,
   overlay: null,
@@ -99,7 +102,7 @@ function closeOverlay() {
   }
 }
 
-function showOverlay(title, bodyText) {
+function openOverlay(title) {
   closeOverlay();
   const backdrop = element(
     "div",
@@ -121,14 +124,7 @@ function showOverlay(title, bodyText) {
     { textContent: "×", onclick: closeOverlay, title: "Close (Esc)" }
   );
   header.appendChild(close);
-  const body = element(
-    "pre",
-    "margin:0;padding:14px 16px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;" +
-      "line-height:1.45;white-space:pre-wrap;",
-    { textContent: bodyText }
-  );
   panel.appendChild(header);
-  panel.appendChild(body);
   backdrop.appendChild(panel);
   backdrop.addEventListener("click", (event) => {
     if (event.target === backdrop) closeOverlay();
@@ -139,6 +135,38 @@ function showOverlay(title, bodyText) {
     if (event.key === "Escape") closeOverlay();
   };
   document.addEventListener("keydown", state.overlayKeydown);
+  return panel;
+}
+
+function showOverlay(title, bodyText) {
+  const panel = openOverlay(title);
+  panel.appendChild(
+    element(
+      "pre",
+      "margin:0;padding:14px 16px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;" +
+        "line-height:1.45;white-space:pre-wrap;",
+      { textContent: bodyText }
+    )
+  );
+}
+
+function labeledField(labelText, controlNode) {
+  const wrapper = element("label", "display:flex;flex-direction:column;gap:4px;font-size:12px;color:#374151;");
+  wrapper.appendChild(element("span", "font-weight:600;", { textContent: labelText }));
+  wrapper.appendChild(controlNode);
+  return wrapper;
+}
+
+function selectControl(items, selectedValue) {
+  const select = element("select", "padding:6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;background:#fff;color:#111827;");
+  for (const item of items) {
+    const option = document.createElement("option");
+    option.value = item;
+    option.textContent = item;
+    option.selected = item === selectedValue;
+    select.appendChild(option);
+  }
+  return select;
 }
 
 /* -------------------------------------------------------------------- HTTP */
@@ -223,19 +251,7 @@ async function guarded(label, work) {
   }
 }
 
-async function runExport(formatOverride) {
-  const uid = await currentTargetUid();
-  if (!uid) {
-    showOverlay("Guffin: no target", NO_TARGET_MESSAGE);
-    return;
-  }
-  const body = {
-    output_format: setting(SETTING_DEFAULT_FORMAT, "markdown"),
-    project_type: setting(SETTING_DEFAULT_TYPE, "article"),
-    ...parsedExtraFields(),
-    ...(formatOverride ? { output_format: formatOverride } : {}),
-    target: uid,
-  };
+async function executeExport(uid, body) {
   toast(`Guffin: exporting ${uid} as ${body.output_format} (${body.project_type})…`, 8000);
   const response = await fetchWithTimeout(
     `${serverUrl()}/v1/export`,
@@ -250,6 +266,83 @@ async function runExport(formatOverride) {
   const fileName = fileNameFromDisposition(response.headers.get("Content-Disposition")) || `${uid}.${body.output_format}`;
   saveBlob(blob, fileName);
   toast(`Guffin: export ready — choose where to save ${fileName} (${Math.ceil(blob.size / 1024)} KB).`, 8000);
+}
+
+async function runExport(formatOverride) {
+  const uid = await currentTargetUid();
+  if (!uid) {
+    showOverlay("Guffin: no target", NO_TARGET_MESSAGE);
+    return;
+  }
+  const body = {
+    output_format: setting(SETTING_DEFAULT_FORMAT, "markdown"),
+    project_type: setting(SETTING_DEFAULT_TYPE, "article"),
+    ...parsedExtraFields(),
+    ...(formatOverride ? { output_format: formatOverride } : {}),
+    target: uid,
+  };
+  await executeExport(uid, body);
+}
+
+const OPTIONS_COMMAND_LABEL = "Guffin: Export current page/block with options…";
+
+function showExportOptionsDialog() {
+  const panel = openOverlay("Guffin: export with options");
+  const form = element("div", "display:flex;flex-direction:column;gap:12px;padding:14px 16px;min-width:360px;");
+  const formatSelect = selectControl(EXPORT_FORMATS, String(setting(SETTING_DEFAULT_FORMAT, "markdown")));
+  const typeSelect = selectControl(PROJECT_TYPES, String(setting(SETTING_DEFAULT_TYPE, "article")));
+  const extraArea = element(
+    "textarea",
+    "padding:6px;border:1px solid #d1d5db;border-radius:4px;font-family:ui-monospace,Menlo,monospace;" +
+      "font-size:12px;resize:vertical;background:#fff;color:#111827;",
+    { value: String(setting(SETTING_EXTRA_FIELDS, "")), rows: 3, placeholder: '{"numbering": false}' }
+  );
+  form.appendChild(labeledField("Format", formatSelect));
+  form.appendChild(labeledField("Project type", typeSelect));
+  form.appendChild(labeledField("Extra request fields (JSON — this export only)", extraArea));
+  const buttons = element("div", "display:flex;justify-content:flex-end;gap:8px;");
+  buttons.appendChild(
+    element(
+      "button",
+      "padding:6px 14px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#374151;font-size:13px;cursor:pointer;",
+      { textContent: "Cancel", onclick: closeOverlay }
+    )
+  );
+  buttons.appendChild(
+    element(
+      "button",
+      "padding:6px 14px;border:none;border-radius:4px;background:#2563eb;color:#fff;font-size:13px;cursor:pointer;",
+      {
+        textContent: "Export",
+        onclick: () => submitExportOptions(formatSelect.value, typeSelect.value, extraArea.value),
+      }
+    )
+  );
+  form.appendChild(buttons);
+  panel.appendChild(form);
+}
+
+async function submitExportOptions(outputFormat, projectType, extraText) {
+  let extra = {};
+  const raw = extraText.trim();
+  if (raw) {
+    try {
+      extra = JSON.parse(raw);
+      if (typeof extra !== "object" || extra === null || Array.isArray(extra)) throw new Error("must be a JSON object");
+    } catch (err) {
+      toast(`Guffin: extra fields is not a JSON object — ${err.message}`, 6000);
+      return; // the dialog stays open for correction
+    }
+  }
+  const uid = await currentTargetUid();
+  closeOverlay();
+  if (!uid) {
+    showOverlay("Guffin: no target", NO_TARGET_MESSAGE);
+    return;
+  }
+  await guarded(OPTIONS_COMMAND_LABEL, () =>
+    executeExport(uid, { ...extra, output_format: outputFormat, project_type: projectType, target: uid })
+  );
 }
 
 async function runDump() {
@@ -287,10 +380,20 @@ async function runHealth() {
 
 /* ------------------------------------------------------------------- wiring */
 
-function addCommand(label, work) {
-  state.extensionAPI.ui.commandPalette.addCommand({ label, callback: () => guarded(label, work) });
-  state.commandLabels.push(label);
-}
+/* The command set is fixed, not a registry accumulated at load time: onunload removes exactly
+ * these labels, so an unload can never remove more (or fewer) than one load registered, and
+ * removing an already-absent label is a no-op. */
+const COMMANDS = [
+  { label: "Guffin: Export current page/block", run: () => runExport(null) },
+  { label: "Guffin: Export current page/block as Markdown", run: () => runExport("markdown") },
+  { label: "Guffin: Export current page/block as PDF", run: () => runExport("pdf") },
+  { label: "Guffin: Export current page/block as EPUB", run: () => runExport("epub") },
+  // Opening the dialog is instant, so it bypasses the single-flight guard; the guard applies
+  // when its Export button submits.
+  { label: OPTIONS_COMMAND_LABEL, run: () => showExportOptionsDialog(), unguarded: true },
+  { label: "Guffin: Dump current page/block", run: () => runDump() },
+  { label: "Guffin: Server health", run: () => runHealth() },
+];
 
 export default {
   onload: ({ extensionAPI }) => {
@@ -334,23 +437,28 @@ export default {
       ],
     });
 
-    addCommand("Guffin: Export current page/block", () => runExport(null));
-    addCommand("Guffin: Export current page/block as Markdown", () => runExport("markdown"));
-    addCommand("Guffin: Export current page/block as PDF", () => runExport("pdf"));
-    addCommand("Guffin: Export current page/block as EPUB", () => runExport("epub"));
-    addCommand("Guffin: Dump current page/block", () => runDump());
-    addCommand("Guffin: Server health", () => runHealth());
+    for (const command of COMMANDS) {
+      extensionAPI.ui.commandPalette.addCommand({
+        label: command.label,
+        callback: command.unguarded ? command.run : () => guarded(command.label, command.run),
+      });
+    }
   },
 
   onunload: () => {
-    for (const label of state.commandLabels) {
-      state.extensionAPI.ui.commandPalette.removeCommand({ label });
+    const commandPalette = state.extensionAPI?.ui?.commandPalette;
+    for (const command of COMMANDS) {
+      try {
+        commandPalette?.removeCommand({ label: command.label });
+      } catch {
+        /* a command Roam has already dropped is not worth failing an unload over */
+      }
     }
-    state.commandLabels = [];
     if (state.activeAbort) state.activeAbort.abort();
     closeOverlay();
     for (const node of state.toasts) node.remove();
     state.toasts = [];
-    state.extensionAPI = null;
+    // extensionAPI is deliberately NOT nulled: on a reload Roam may run this after the fresh
+    // onload, and nulling the shared reference would disable the live instance.
   },
 };

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — 2026-07-30
+
+- New command *Guffin: Export current page/block with options…* — a dialog choosing format,
+  project type, and extra request fields for a single export, pre-seeded from the settings
+  and leaving them untouched.
+- Project-type vocabulary follows guffin's rename: `article` (formerly `default`).
+
 ## 0.1.0 — 2026-07-30
 
 Initial MVP.
