@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-07-30
+
+- Page context menus: right-clicking a page title, a `[[page reference]]` inside a block, or
+  a page link in linked references / query results offers *Export page*, *Export page with
+  options…*, and *Dump page* for that page — no navigation required. A menu surface absent
+  from the running Roam build is skipped.
+
 ## 0.3.0 — 2026-07-30
 
 - The dump commands now render guffin's console output as styled HTML in a sandboxed

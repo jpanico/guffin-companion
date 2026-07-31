@@ -460,6 +460,28 @@ const BLOCK_CONTEXT_COMMANDS = [
   },
 ];
 
+/* Page-targeted context menus. Three Roam surfaces name a page: its title (pageContextMenu),
+ * a [[reference]] inside a block (pageRefContextMenu), and a link in linked references or
+ * query results (pageLinkContextMenu) — so any page name you can right-click is exportable
+ * in place, without navigating. Each surface hands the page's uid to its callback under its
+ * own key. A surface absent from the running Roam build is skipped. */
+const PAGE_MENU_SURFACES = [
+  { name: "pageContextMenu", uidKey: "page-uid" },
+  { name: "pageRefContextMenu", uidKey: "ref-uid" },
+  { name: "pageLinkContextMenu", uidKey: "page-uid" },
+];
+
+const PAGE_CONTEXT_COMMANDS = [
+  { label: "Guffin: Export page", run: (pageUid) => guarded("Guffin: Export page", () => runExport(null, pageUid)) },
+  { label: "Guffin: Export page with options…", run: (pageUid) => showExportOptionsDialog(pageUid) },
+  { label: "Guffin: Dump page", run: (pageUid) => guarded("Guffin: Dump page", () => runDump(pageUid)) },
+];
+
+function pageMenuOf(surface) {
+  const menu = window.roamAlphaAPI.ui[surface.name];
+  return menu && typeof menu.addCommand === "function" ? menu : null;
+}
+
 export default {
   onload: ({ extensionAPI }) => {
     state.extensionAPI = extensionAPI;
@@ -520,6 +542,16 @@ export default {
         callback: (context) => command.run(context["block-uid"]),
       });
     }
+    for (const surface of PAGE_MENU_SURFACES) {
+      const menu = pageMenuOf(surface);
+      if (!menu) continue;
+      for (const command of PAGE_CONTEXT_COMMANDS) {
+        menu.addCommand({
+          label: command.label,
+          callback: (context) => command.run(context[surface.uidKey]),
+        });
+      }
+    }
   },
 
   onunload: () => {
@@ -536,6 +568,17 @@ export default {
         window.roamAlphaAPI.ui.blockContextMenu.removeCommand({ label: command.label });
       } catch {
         /* same posture as the palette removals above */
+      }
+    }
+    for (const surface of PAGE_MENU_SURFACES) {
+      const menu = pageMenuOf(surface);
+      if (!menu) continue;
+      for (const command of PAGE_CONTEXT_COMMANDS) {
+        try {
+          menu.removeCommand({ label: command.label });
+        } catch {
+          /* same posture as the palette removals above */
+        }
       }
     }
     if (state.activeAbort) state.activeAbort.abort();

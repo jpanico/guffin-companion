@@ -46,6 +46,10 @@ Not yet in Roam Depot. Load as a developer extension:
 subtree with options…*, and *Dump block subtree* — the clicked block is the target, no
 zooming required.
 
+**Right-clicking a page name** — a page title, a `[[page reference]]` inside a block, or a
+page link in linked references / query results — offers *Export page*, *Export page with
+options…*, and *Dump page* for that page, without navigating to it.
+
 Every export is integrity-checked before saving: the received bytes are hashed
 (SHA-256) and compared against the server's RFC 9530 `Content-Digest`; a mismatch shows an
 error and saves nothing.
