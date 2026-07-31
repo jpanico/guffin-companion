@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-07-30
+
+- The dump commands now render guffin's console output as styled HTML in a sandboxed
+  inspector overlay (wrap width settable via the new *Dump width* setting) instead of plain
+  text.
+- Right-click block context menu: *Export block subtree*, *Export block subtree with
+  options…*, and *Dump block subtree* target the clicked block without zooming.
+- Exports are integrity-verified before saving: the received bytes' SHA-256 is compared
+  against the server's `Content-Digest`; a mismatch shows an error and saves nothing.
+
 ## 0.2.0 — 2026-07-30
 
 - New command *Guffin: Export current page/block with options…* — a dialog choosing format,

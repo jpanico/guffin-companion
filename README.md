@@ -39,8 +39,16 @@ Not yet in Roam Depot. Load as a developer extension:
 | Guffin: Export current page/block | Exports using the settings' default format and type |
 | Guffin: Export current page/block as Markdown / as PDF / as EPUB | Same, with the format pinned |
 | Guffin: Export current page/block with options… | A dialog choosing format, project type, and extra request fields for this export only — settings untouched |
-| Guffin: Dump current page/block | Shows guffin's diagnostic tree rendering in an overlay |
+| Guffin: Dump current page/block | Shows guffin's diagnostic tree rendering in a styled inspector overlay |
 | Guffin: Server health | Toasts the server's version and provenance |
+
+**Right-clicking any block's bullet** adds three more: *Export block subtree*, *Export block
+subtree with options…*, and *Dump block subtree* — the clicked block is the target, no
+zooming required.
+
+Every export is integrity-checked before saving: the received bytes are hashed
+(SHA-256) and compared against the server's RFC 9530 `Content-Digest`; a mismatch shows an
+error and saves nothing.
 
 The target is whatever the main window shows: a page exports whole, a zoomed-in block
 exports just that subtree. (The scrolling daily-notes view has no single target; the
@@ -58,6 +66,7 @@ text — the same log lines, gate findings, and traceback a terminal invocation 
 | Default export format | `markdown` | `markdown` / `pdf` / `epub` |
 | Default project type | `article` | `article` / `book` / `manuscript` |
 | Request timeout (seconds) | `600` | Renders queue server-side and can take minutes |
+| Dump width (characters) | `120` | How wide the dump inspector's console rendering wraps |
 | Extra export request fields (JSON) | `{}` | Merged into every export request; the full field vocabulary is the server's `/openapi.json` |
 
 ## Troubleshooting

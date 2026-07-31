@@ -18,6 +18,8 @@ const SETTING_DEFAULT_FORMAT = "default-format";
 const SETTING_DEFAULT_TYPE = "default-type";
 const SETTING_TIMEOUT_SECONDS = "timeout-seconds";
 const SETTING_EXTRA_FIELDS = "extra-fields";
+const SETTING_DUMP_WIDTH = "dump-width";
+const DEFAULT_DUMP_WIDTH = 120;
 
 const NO_TARGET_MESSAGE =
   "Open a page or zoom into a block first — the scrolling daily-notes view has no single export target.";
@@ -49,6 +51,11 @@ function serverUrl() {
 function timeoutSeconds() {
   const parsed = Number.parseFloat(setting(SETTING_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TIMEOUT_SECONDS;
+}
+
+function dumpWidth() {
+  const parsed = Number.parseInt(setting(SETTING_DUMP_WIDTH, DEFAULT_DUMP_WIDTH), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DUMP_WIDTH;
 }
 
 function parsedExtraFields() {
@@ -150,6 +157,16 @@ function showOverlay(title, bodyText) {
   );
 }
 
+function showHtmlOverlay(title, html) {
+  const panel = openOverlay(title);
+  panel.style.maxWidth = "min(1200px, 94vw)";
+  const frame = document.createElement("iframe");
+  frame.setAttribute("sandbox", ""); // fully sandboxed: no scripts, no navigation — display only
+  frame.style.cssText = "border:none;width:min(1100px,90vw);height:72vh;background:#fff;";
+  frame.srcdoc = html;
+  panel.appendChild(frame);
+}
+
 function labeledField(labelText, controlNode) {
   const wrapper = element("label", "display:flex;flex-direction:column;gap:4px;font-size:12px;color:#374151;");
   wrapper.appendChild(element("span", "font-weight:600;", { textContent: labelText }));
@@ -213,6 +230,19 @@ function fileNameFromDisposition(disposition) {
   return plainForm ? plainForm[1].trim() : null;
 }
 
+function contentDigestSha256(headerValue) {
+  if (!headerValue) return null;
+  const match = headerValue.match(/sha-256=:([A-Za-z0-9+/=]+):/i);
+  return match ? match[1] : null;
+}
+
+async function sha256Base64(blob) {
+  const digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+  let binary = "";
+  for (const byte of new Uint8Array(digest)) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
 function saveBlob(blob, fileName) {
   const url = URL.createObjectURL(blob);
   const anchor = element("a", "display:none;", { href: url, download: fileName });
@@ -263,13 +293,29 @@ async function executeExport(uid, body) {
     return;
   }
   const blob = await response.blob();
+  const expectedDigest = contentDigestSha256(response.headers.get("Content-Digest"));
+  if (expectedDigest) {
+    const actualDigest = await sha256Base64(blob);
+    if (actualDigest !== expectedDigest) {
+      showOverlay(
+        `Guffin: integrity check failed (${uid})`,
+        `The received bytes do not match the server's Content-Digest.\n\n` +
+          `expected sha-256: ${expectedDigest}\n` +
+          `received sha-256: ${actualDigest}\n\n` +
+          `Nothing was saved. Retry the export; if this repeats, something between the server and ` +
+          `this page is altering the response body.`
+      );
+      return;
+    }
+  }
   const fileName = fileNameFromDisposition(response.headers.get("Content-Disposition")) || `${uid}.${body.output_format}`;
   saveBlob(blob, fileName);
-  toast(`Guffin: export ready — choose where to save ${fileName} (${Math.ceil(blob.size / 1024)} KB).`, 8000);
+  const verified = expectedDigest ? ", digest verified" : "";
+  toast(`Guffin: export ready — choose where to save ${fileName} (${Math.ceil(blob.size / 1024)} KB${verified}).`, 8000);
 }
 
-async function runExport(formatOverride) {
-  const uid = await currentTargetUid();
+async function runExport(formatOverride, fixedUid) {
+  const uid = fixedUid ?? (await currentTargetUid());
   if (!uid) {
     showOverlay("Guffin: no target", NO_TARGET_MESSAGE);
     return;
@@ -286,8 +332,8 @@ async function runExport(formatOverride) {
 
 const OPTIONS_COMMAND_LABEL = "Guffin: Export current page/block with options…";
 
-function showExportOptionsDialog() {
-  const panel = openOverlay("Guffin: export with options");
+function showExportOptionsDialog(fixedUid) {
+  const panel = openOverlay(fixedUid ? `Guffin: export with options — ${fixedUid}` : "Guffin: export with options");
   const form = element("div", "display:flex;flex-direction:column;gap:12px;padding:14px 16px;min-width:360px;");
   const formatSelect = selectControl(EXPORT_FORMATS, String(setting(SETTING_DEFAULT_FORMAT, "markdown")));
   const typeSelect = selectControl(PROJECT_TYPES, String(setting(SETTING_DEFAULT_TYPE, "article")));
@@ -314,7 +360,7 @@ function showExportOptionsDialog() {
       "padding:6px 14px;border:none;border-radius:4px;background:#2563eb;color:#fff;font-size:13px;cursor:pointer;",
       {
         textContent: "Export",
-        onclick: () => submitExportOptions(formatSelect.value, typeSelect.value, extraArea.value),
+        onclick: () => submitExportOptions(formatSelect.value, typeSelect.value, extraArea.value, fixedUid),
       }
     )
   );
@@ -322,7 +368,7 @@ function showExportOptionsDialog() {
   panel.appendChild(form);
 }
 
-async function submitExportOptions(outputFormat, projectType, extraText) {
+async function submitExportOptions(outputFormat, projectType, extraText, fixedUid) {
   let extra = {};
   const raw = extraText.trim();
   if (raw) {
@@ -334,7 +380,7 @@ async function submitExportOptions(outputFormat, projectType, extraText) {
       return; // the dialog stays open for correction
     }
   }
-  const uid = await currentTargetUid();
+  const uid = fixedUid ?? (await currentTargetUid());
   closeOverlay();
   if (!uid) {
     showOverlay("Guffin: no target", NO_TARGET_MESSAGE);
@@ -345,8 +391,8 @@ async function submitExportOptions(outputFormat, projectType, extraText) {
   );
 }
 
-async function runDump() {
-  const uid = await currentTargetUid();
+async function runDump(fixedUid) {
+  const uid = fixedUid ?? (await currentTargetUid());
   if (!uid) {
     showOverlay("Guffin: no target", NO_TARGET_MESSAGE);
     return;
@@ -357,7 +403,7 @@ async function runDump() {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target: uid, console_format: "text" }),
+      body: JSON.stringify({ target: uid, console_format: "html", console_width: dumpWidth() }),
     },
     timeoutSeconds()
   );
@@ -365,7 +411,7 @@ async function runDump() {
     showOverlay(`Guffin: dump failed (${uid})`, await problemText(response));
     return;
   }
-  showOverlay(`Guffin: dump — ${uid}`, await response.text());
+  showHtmlOverlay(`Guffin: dump — ${uid}`, await response.text());
 }
 
 async function runHealth() {
@@ -393,6 +439,25 @@ const COMMANDS = [
   { label: "Guffin: Export current page/block as EPUB", run: () => runExport("epub") },
   { label: "Guffin: Dump current page/block", run: () => runDump() },
   { label: "Guffin: Server health", run: () => runHealth() },
+];
+
+/* Right-click block commands: the clicked block's subtree is the target, no zooming needed.
+ * Registered on window.roamAlphaAPI (not extensionAPI), so onunload must remove them; the
+ * same fixed-list discipline as COMMANDS applies. Roam passes the clicked block's info to
+ * the callback with hyphenated keys ("block-uid"). */
+const BLOCK_CONTEXT_COMMANDS = [
+  {
+    label: "Guffin: Export block subtree",
+    run: (blockUid) => guarded("Guffin: Export block subtree", () => runExport(null, blockUid)),
+  },
+  {
+    label: "Guffin: Export block subtree with options…",
+    run: (blockUid) => showExportOptionsDialog(blockUid),
+  },
+  {
+    label: "Guffin: Dump block subtree",
+    run: (blockUid) => guarded("Guffin: Dump block subtree", () => runDump(blockUid)),
+  },
 ];
 
 export default {
@@ -427,6 +492,12 @@ export default {
           action: { type: "input", placeholder: String(DEFAULT_TIMEOUT_SECONDS) },
         },
         {
+          id: SETTING_DUMP_WIDTH,
+          name: "Dump width (characters)",
+          description: "How wide the dump inspector's console rendering wraps.",
+          action: { type: "input", placeholder: String(DEFAULT_DUMP_WIDTH) },
+        },
+        {
           id: SETTING_EXTRA_FIELDS,
           name: "Extra export request fields (JSON)",
           description:
@@ -443,6 +514,12 @@ export default {
         callback: command.unguarded ? command.run : () => guarded(command.label, command.run),
       });
     }
+    for (const command of BLOCK_CONTEXT_COMMANDS) {
+      window.roamAlphaAPI.ui.blockContextMenu.addCommand({
+        label: command.label,
+        callback: (context) => command.run(context["block-uid"]),
+      });
+    }
   },
 
   onunload: () => {
@@ -452,6 +529,13 @@ export default {
         commandPalette?.removeCommand({ label: command.label });
       } catch {
         /* a command Roam has already dropped is not worth failing an unload over */
+      }
+    }
+    for (const command of BLOCK_CONTEXT_COMMANDS) {
+      try {
+        window.roamAlphaAPI.ui.blockContextMenu.removeCommand({ label: command.label });
+      } catch {
+        /* same posture as the palette removals above */
       }
     }
     if (state.activeAbort) state.activeAbort.abort();
