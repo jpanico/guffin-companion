@@ -21,6 +21,13 @@ const SETTING_EXTRA_FIELDS = "extra-fields";
 const SETTING_DUMP_WIDTH = "dump-width";
 const DEFAULT_DUMP_WIDTH = 120;
 
+/* Extra request fields the export-options dialog seeds on top of the "Extra export request
+ * fields" setting. The dialog is where a single page or block gets exported on its own, and
+ * guffin's `book` profile drops a root's loose preamble (blocks ahead of the first heading), so
+ * a chapter page exported alone as a book would lose its epigraph; `preamble: true` keeps it.
+ * The setting's own fields win on conflict, and the text stays editable for the one export. */
+const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({ preamble: true });
+
 const NO_TARGET_MESSAGE =
   "Open a page or zoom into a block first — the scrolling daily-notes view has no single export target.";
 
@@ -56,6 +63,25 @@ function timeoutSeconds() {
 function dumpWidth() {
   const parsed = Number.parseInt(setting(SETTING_DUMP_WIDTH, DEFAULT_DUMP_WIDTH), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DUMP_WIDTH;
+}
+
+/* The export-options dialog's initial extra-fields text: the setting's JSON object merged over
+ * DIALOG_EXTRA_FIELD_DEFAULTS, one line, a space after each colon and comma. A setting that is
+ * not a JSON object is returned verbatim so the dialog shows what needs correcting. */
+function dialogExtraFieldsText() {
+  const raw = String(setting(SETTING_EXTRA_FIELDS, "")).trim();
+  let fromSetting = {};
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return raw;
+      fromSetting = parsed;
+    } catch {
+      return raw;
+    }
+  }
+  const merged = { ...DIALOG_EXTRA_FIELD_DEFAULTS, ...fromSetting };
+  return JSON.stringify(merged).replace(/":/g, '": ').replace(/,"/g, ', "');
 }
 
 function parsedExtraFields() {
@@ -341,7 +367,7 @@ function showExportOptionsDialog(fixedUid) {
     "textarea",
     "padding:6px;border:1px solid #d1d5db;border-radius:4px;font-family:ui-monospace,Menlo,monospace;" +
       "font-size:12px;resize:vertical;background:#fff;color:#111827;",
-    { value: String(setting(SETTING_EXTRA_FIELDS, "")), rows: 3, placeholder: '{"numbering": false}' }
+    { value: dialogExtraFieldsText(), rows: 3, placeholder: '{"numbering": false, "preamble": true}' }
   );
   form.appendChild(labeledField("Format", formatSelect));
   form.appendChild(labeledField("Project type", typeSelect));

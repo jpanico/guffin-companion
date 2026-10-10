@@ -38,7 +38,7 @@ Not yet in Roam Depot. Load as a developer extension:
 |---|---|
 | Guffin: Export current page/block | Exports using the settings' default format and type |
 | Guffin: Export current page/block as Markdown / as PDF / as EPUB | Same, with the format pinned |
-| Guffin: Export current page/block with options… | A dialog choosing format, project type, and extra request fields for this export only — settings untouched |
+| Guffin: Export current page/block with options… | A dialog choosing format, project type, and extra request fields for this export only — settings untouched. The extra fields are pre-seeded from the settings plus `"preamble": true`, so a single page exported as a `book` keeps its content above the first heading (guffin's book profile otherwise drops it) |
 | Guffin: Dump current page/block | Shows guffin's diagnostic tree rendering in a styled inspector overlay |
 | Guffin: Server health | Toasts the server's version and provenance |
 

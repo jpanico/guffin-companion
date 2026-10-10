@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1 — 2026-10-09
+
+- The export-options dialog pre-seeds its extra request fields with `"preamble": true` on top
+  of the settings' extra fields (the settings win on conflict). Guffin's `book` profile drops a
+  root's loose preamble — the blocks ahead of its first heading — so a chapter page exported on
+  its own as a book lost its epigraph; the dialog, being where single pages get exported, now
+  keeps it by default. The plain export commands are unchanged.
+
 ## 0.4.0 — 2026-07-30
 
 - Page context menus: right-clicking a page title, a `[[page reference]]` inside a block, or
