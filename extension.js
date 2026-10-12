@@ -26,8 +26,8 @@ const DEFAULT_DUMP_WIDTH = 120;
  * guffin's `book` profile drops a root's loose preamble (blocks ahead of the first heading), so
  * a chapter page exported alone as a book would lose its epigraph; `preamble: true` keeps it.
  * `render_alternatives: false` is seeded explicitly, though it is guffin's default, so the
- * option is visible and one edit away: set true, a PDF export shows each versioned block's
- * alternative wordings beside its selected one (EPUB and Markdown don't present them yet).
+ * option is visible and one edit away: set true, an export in any format shows each versioned
+ * block's alternative wordings beside its selected one.
  * The setting's own fields win on conflict, and the text stays editable for the one export. */
 const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({ preamble: true, render_alternatives: false });
 
