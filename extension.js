@@ -25,8 +25,11 @@ const DEFAULT_DUMP_WIDTH = 120;
  * fields" setting. The dialog is where a single page or block gets exported on its own, and
  * guffin's `book` profile drops a root's loose preamble (blocks ahead of the first heading), so
  * a chapter page exported alone as a book would lose its epigraph; `preamble: true` keeps it.
+ * `render_alternatives: false` is seeded explicitly, though it is guffin's default, so the
+ * option is visible and one edit away: set true, a PDF export shows each versioned block's
+ * alternative wordings beside its selected one (EPUB and Markdown don't present them yet).
  * The setting's own fields win on conflict, and the text stays editable for the one export. */
-const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({ preamble: true });
+const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({ preamble: true, render_alternatives: false });
 
 const NO_TARGET_MESSAGE =
   "Open a page or zoom into a block first — the scrolling daily-notes view has no single export target.";

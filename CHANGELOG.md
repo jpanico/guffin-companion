@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2 — 2026-10-12
+
+- The export-options dialog also pre-seeds `"render_alternatives": false` among its extra request
+  fields. It is guffin's default, seeded so the option is visible and one edit away: set to
+  `true`, a PDF export shows each versioned block's alternative wordings beside its selected one
+  (guffin's EPUB and Markdown renderers don't present them yet, and warn). A guffin server older
+  than commit `d73721e` rejects the unknown field with a 400; `2ac342d` is the first that renders
+  alternatives.
+
 ## 0.4.1 — 2026-10-09
 
 - The export-options dialog pre-seeds its extra request fields with `"preamble": true` on top
