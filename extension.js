@@ -27,9 +27,15 @@ const DEFAULT_DUMP_WIDTH = 120;
  * a chapter page exported alone as a book would lose its epigraph; `preamble: true` keeps it.
  * `render_alternatives: false` is seeded explicitly, though it is guffin's default, so the
  * option is visible and one edit away: set true, an export in any format shows each versioned
- * block's alternative wordings beside its selected one.
+ * block's alternative wordings beside its selected one. `suppress_notes: false` is seeded the
+ * same way: set true, the export leaves its notes out altogether — each note marker reads as its
+ * plain lead-in, and no footnote, endnote, or Notes section appears.
  * The setting's own fields win on conflict, and the text stays editable for the one export. */
-const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({ preamble: true, render_alternatives: false });
+const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({
+  preamble: true,
+  render_alternatives: false,
+  suppress_notes: false,
+});
 
 const NO_TARGET_MESSAGE =
   "Open a page or zoom into a block first — the scrolling daily-notes view has no single export target.";

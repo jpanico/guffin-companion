@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.3 — 2026-10-15
+
+- The export-options dialog also pre-seeds `"suppress_notes": false` among its extra request
+  fields. It is guffin's default, seeded so the option is visible and one edit away: set to
+  `true`, the export leaves its notes out altogether, in every format and project type — each
+  note marker reads as its plain lead-in, no footnote, endnote, or Notes section appears, and no
+  note check runs, so a draft with unfinished notes exports. A guffin server older than commit
+  `ac60ce0` rejects the unknown field with a 400.
+
 ## 0.4.2 — 2026-10-12
 
 - The export-options dialog also pre-seeds `"render_alternatives": false` among its extra request
