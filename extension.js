@@ -11,7 +11,9 @@ const DEFAULT_SERVER_URL = "http://127.0.0.1:8077";
 const DEFAULT_TIMEOUT_SECONDS = 600; // renders can take minutes, and the server queues invocations
 const HEALTH_TIMEOUT_SECONDS = 10;
 const EXPORT_FORMATS = ["markdown", "pdf", "epub"];
-const PROJECT_TYPES = ["article", "book", "manuscript"];
+/* guffin's project types (its --type): `outline` is the article with no title heading, so the
+ * source outline renders as authored, every heading at its own level. */
+const PROJECT_TYPES = ["article", "book", "manuscript", "outline"];
 
 const SETTING_SERVER_URL = "server-url";
 const SETTING_DEFAULT_FORMAT = "default-format";

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.4 — 2026-10-28
+
+- The project-type choice — in the export-options dialog and in the *Default project type*
+  setting — offers guffin's new `outline` type beside `article`, `book`, and `manuscript`
+  (`article` stays the default). An outline is the article with no title heading: the title
+  never opens the document as a heading, so no heading is demoted beneath it and every heading
+  renders at the level it was authored in Roam, in every format (the title still reaches the
+  document metadata). A guffin server older than commit `f16eddb` rejects the unknown type with
+  a 400.
+
 ## 0.4.3 — 2026-10-15
 
 - The export-options dialog also pre-seeds `"suppress_notes": false` among its extra request
