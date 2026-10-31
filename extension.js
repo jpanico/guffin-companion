@@ -11,7 +11,7 @@ const DEFAULT_SERVER_URL = "http://127.0.0.1:8077";
 const DEFAULT_TIMEOUT_SECONDS = 600; // renders can take minutes, and the server queues invocations
 const HEALTH_TIMEOUT_SECONDS = 10;
 const EXPORT_FORMATS = ["markdown", "pdf", "epub"];
-/* guffin's work types (its --type): `outline` is the article with no title heading, so the
+/* guffin's work types (its --work): `outline` is the article with no title heading, so the
  * source outline renders as authored, every heading at its own level. */
 const WORK_TYPES = ["article", "book", "manuscript", "outline"];
 
@@ -541,7 +541,7 @@ export default {
         {
           id: SETTING_DEFAULT_TYPE,
           name: "Default work type",
-          description: "The --type profile every export request carries.",
+          description: "The --work profile every export request carries.",
           action: { type: "select", items: WORK_TYPES },
         },
         {
