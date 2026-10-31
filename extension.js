@@ -31,9 +31,12 @@ const DEFAULT_DUMP_WIDTH = 120;
  * option is visible and one edit away: set true, an export in any format shows each versioned
  * block's alternative wordings beside its selected one. `suppress_notes: false` is seeded the
  * same way: set true, the export leaves its notes out altogether — each note marker reads as its
- * plain lead-in, and no footnote, endnote, or Notes section appears.
+ * plain lead-in, and no footnote, endnote, or Notes section appears. `snapshot: false` comes first
+ * and is seeded the same way: set true, guffin keeps the export's snapshot on its own machine, in
+ * the server's export directory; the download is still the document alone.
  * The setting's own fields win on conflict, and the text stays editable for the one export. */
 const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({
+  snapshot: false,
   preamble: true,
   render_alternatives: false,
   suppress_notes: false,

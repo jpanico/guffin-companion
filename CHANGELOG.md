@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.6 — 2026-10-31
+
+- The export-options dialog pre-seeds `"snapshot": false` as the first of its extra request
+  fields. It is guffin's default, seeded so the option is visible and one edit away: set to
+  `true`, guffin keeps the export's snapshot on its own machine, in the server's export directory
+  (`GUFFIN_EXPORT_DIR`), ready for `diff-roam-tree` or `--from-snapshot`, and the download is still
+  the document alone. A guffin server that does not yet take the field rejects it with a 400, so
+  update the two together.
+
 ## 0.4.5 — 2026-10-31
 
 - Follows guffin's rename of *project type* to *work type*: an export request now sends
