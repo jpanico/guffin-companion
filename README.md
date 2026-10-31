@@ -38,7 +38,7 @@ Not yet in Roam Depot. Load as a developer extension:
 |---|---|
 | Guffin: Export current page/block | Exports using the settings' default format and type |
 | Guffin: Export current page/block as Markdown / as PDF / as EPUB | Same, with the format pinned |
-| Guffin: Export current page/block with options… | A dialog choosing format, project type, and extra request fields for this export only — settings untouched. The extra fields are pre-seeded from the settings plus `"preamble": true`, so a single page exported as a `book` keeps its content above the first heading (guffin's book profile otherwise drops it), `"render_alternatives": false`, so showing versioned blocks' alternative wordings (in any format) is one edit away, and `"suppress_notes": false`, so leaving the notes out altogether (each marker as its plain lead-in, no footnote, endnote, or Notes section) is one edit away too |
+| Guffin: Export current page/block with options… | A dialog choosing format, work type, and extra request fields for this export only — settings untouched. The extra fields are pre-seeded from the settings plus `"preamble": true`, so a single page exported as a `book` keeps its content above the first heading (guffin's book profile otherwise drops it), `"render_alternatives": false`, so showing versioned blocks' alternative wordings (in any format) is one edit away, and `"suppress_notes": false`, so leaving the notes out altogether (each marker as its plain lead-in, no footnote, endnote, or Notes section) is one edit away too |
 | Guffin: Dump current page/block | Shows guffin's diagnostic tree rendering in a styled inspector overlay |
 | Guffin: Server health | Toasts the server's version and provenance |
 
@@ -68,7 +68,7 @@ text — the same log lines, gate findings, and traceback a terminal invocation 
 |---|---|---|
 | Server URL | `http://127.0.0.1:8077` | The colocated guffin-server |
 | Default export format | `markdown` | `markdown` / `pdf` / `epub` |
-| Default project type | `article` | `article` / `book` / `manuscript` / `outline` — `outline` is the article with no title heading, so the source outline renders as authored, every heading at its own level |
+| Default work type | `article` | `article` / `book` / `manuscript` / `outline` — `outline` is the article with no title heading, so the source outline renders as authored, every heading at its own level |
 | Request timeout (seconds) | `600` | Renders queue server-side and can take minutes |
 | Dump width (characters) | `120` | How wide the dump inspector's console rendering wraps |
 | Extra export request fields (JSON) | `{}` | Merged into every export request; the full field vocabulary is the server's `/openapi.json` |

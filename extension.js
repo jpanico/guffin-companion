@@ -11,9 +11,9 @@ const DEFAULT_SERVER_URL = "http://127.0.0.1:8077";
 const DEFAULT_TIMEOUT_SECONDS = 600; // renders can take minutes, and the server queues invocations
 const HEALTH_TIMEOUT_SECONDS = 10;
 const EXPORT_FORMATS = ["markdown", "pdf", "epub"];
-/* guffin's project types (its --type): `outline` is the article with no title heading, so the
+/* guffin's work types (its --type): `outline` is the article with no title heading, so the
  * source outline renders as authored, every heading at its own level. */
-const PROJECT_TYPES = ["article", "book", "manuscript", "outline"];
+const WORK_TYPES = ["article", "book", "manuscript", "outline"];
 
 const SETTING_SERVER_URL = "server-url";
 const SETTING_DEFAULT_FORMAT = "default-format";
@@ -319,7 +319,7 @@ async function guarded(label, work) {
 }
 
 async function executeExport(uid, body) {
-  toast(`Guffin: exporting ${uid} as ${body.output_format} (${body.project_type})…`, 8000);
+  toast(`Guffin: exporting ${uid} as ${body.output_format} (${body.work_type})…`, 8000);
   const response = await fetchWithTimeout(
     `${serverUrl()}/v1/export`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
@@ -359,7 +359,7 @@ async function runExport(formatOverride, fixedUid) {
   }
   const body = {
     output_format: setting(SETTING_DEFAULT_FORMAT, "markdown"),
-    project_type: setting(SETTING_DEFAULT_TYPE, "article"),
+    work_type: setting(SETTING_DEFAULT_TYPE, "article"),
     ...parsedExtraFields(),
     ...(formatOverride ? { output_format: formatOverride } : {}),
     target: uid,
@@ -373,7 +373,7 @@ function showExportOptionsDialog(fixedUid) {
   const panel = openOverlay(fixedUid ? `Guffin: export with options — ${fixedUid}` : "Guffin: export with options");
   const form = element("div", "display:flex;flex-direction:column;gap:12px;padding:14px 16px;min-width:360px;");
   const formatSelect = selectControl(EXPORT_FORMATS, String(setting(SETTING_DEFAULT_FORMAT, "markdown")));
-  const typeSelect = selectControl(PROJECT_TYPES, String(setting(SETTING_DEFAULT_TYPE, "article")));
+  const typeSelect = selectControl(WORK_TYPES, String(setting(SETTING_DEFAULT_TYPE, "article")));
   const extraArea = element(
     "textarea",
     "padding:6px;border:1px solid #d1d5db;border-radius:4px;font-family:ui-monospace,Menlo,monospace;" +
@@ -381,7 +381,7 @@ function showExportOptionsDialog(fixedUid) {
     { value: dialogExtraFieldsText(), rows: 3, placeholder: '{"numbering": false, "preamble": true}' }
   );
   form.appendChild(labeledField("Format", formatSelect));
-  form.appendChild(labeledField("Project type", typeSelect));
+  form.appendChild(labeledField("Work type", typeSelect));
   form.appendChild(labeledField("Extra request fields (JSON — this export only)", extraArea));
   const buttons = element("div", "display:flex;justify-content:flex-end;gap:8px;");
   buttons.appendChild(
@@ -405,7 +405,7 @@ function showExportOptionsDialog(fixedUid) {
   panel.appendChild(form);
 }
 
-async function submitExportOptions(outputFormat, projectType, extraText, fixedUid) {
+async function submitExportOptions(outputFormat, workType, extraText, fixedUid) {
   let extra = {};
   const raw = extraText.trim();
   if (raw) {
@@ -424,7 +424,7 @@ async function submitExportOptions(outputFormat, projectType, extraText, fixedUi
     return;
   }
   await guarded(OPTIONS_COMMAND_LABEL, () =>
-    executeExport(uid, { ...extra, output_format: outputFormat, project_type: projectType, target: uid })
+    executeExport(uid, { ...extra, output_format: outputFormat, work_type: workType, target: uid })
   );
 }
 
@@ -540,9 +540,9 @@ export default {
         },
         {
           id: SETTING_DEFAULT_TYPE,
-          name: "Default project type",
+          name: "Default work type",
           description: "The --type profile every export request carries.",
-          action: { type: "select", items: PROJECT_TYPES },
+          action: { type: "select", items: WORK_TYPES },
         },
         {
           id: SETTING_TIMEOUT_SECONDS,

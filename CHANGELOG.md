@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5 — 2026-10-31
+
+- Follows guffin's rename of *project type* to *work type*: an export request now sends
+  `work_type`, and the dialog and the setting say *Work type*. A setting already saved keeps its
+  value. A guffin server older than the rename rejects the new field with a 400, and a newer one
+  rejects the old field the same way, so update the two together.
+
 ## 0.4.4 — 2026-10-28
 
 - The project-type choice — in the export-options dialog and in the *Default project type*
