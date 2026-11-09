@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.1 — 2026-11-09
+
+- The export-options dialog also pre-seeds `"numbering": false` and `"suppress_attributes": true`
+  among its extra request fields. Unlike the fields seeded before them, these are not guffin's
+  defaults but the author's house choices: heading numbering off (a `book` numbers its chapters
+  otherwise), and the ordinary attribute pills, such as a heading's `tags::`, left out (guffin's
+  own tags still apply). A graph whose *Extra export request fields* setting is empty — an
+  edition line opened from a backup starts with none — now exports from the dialog as the working
+  graph does; the setting's own fields still win. The plain export commands send the setting's
+  fields alone, so they are unchanged.
+
 ## 0.5.0 — 2026-11-08
 
 - Every export and dump request names the graph the extension runs in (`graph_name`, from

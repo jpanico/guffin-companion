@@ -34,13 +34,20 @@ const DEFAULT_DUMP_WIDTH = 120;
  * same way: set true, the export leaves its notes out altogether — each note marker reads as its
  * plain lead-in, and no footnote, endnote, or Notes section appears. `snapshot: false` comes first
  * and is seeded the same way: set true, guffin keeps the export's snapshot on its own machine, in
- * the server's export directory; the download is still the document alone.
+ * the server's export directory; the download is still the document alone. The last two are not
+ * guffin's defaults but the author's house choices, so a graph whose setting is empty — an edition
+ * line opened from a backup starts with none — exports as the working graph does: `numbering:
+ * false` turns heading numbering off (a `book` numbers its chapters otherwise), and
+ * `suppress_attributes: true` leaves out the ordinary attribute pills, such as a heading's `tags::`,
+ * while guffin's own tags still apply.
  * The setting's own fields win on conflict, and the text stays editable for the one export. */
 const DIALOG_EXTRA_FIELD_DEFAULTS = Object.freeze({
   snapshot: false,
   preamble: true,
   render_alternatives: false,
   suppress_notes: false,
+  numbering: false,
+  suppress_attributes: true,
 });
 
 const NO_TARGET_MESSAGE =
