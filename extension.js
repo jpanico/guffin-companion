@@ -2,9 +2,10 @@
  *
  * A thin client of a colocated guffin-server (https://github.com/jpanico/guffin): command
  * palette entries POST the open page or zoomed block's UID to the server's loopback HTTP
- * endpoints and hand back the rendered document through the browser's save flow. All Roam
- * connection specifics (Local API port, graph, bearer token) live in the *server's*
- * environment — this extension never sees them.
+ * endpoints and hand back the rendered document through the browser's save flow. Every request
+ * names the graph this extension runs in, so one server serves every graph; the server finds
+ * that graph's Local API token itself (in Roam's tools registry, ~/.roam-tools.json), so this
+ * extension never sees a token.
  */
 
 const DEFAULT_SERVER_URL = "http://127.0.0.1:8077";
@@ -298,6 +299,15 @@ async function currentTargetUid() {
   return await window.roamAlphaAPI.ui.mainWindow.getOpenPageOrBlockUid();
 }
 
+/* The name of the graph this extension runs in, which every request names: a target uid belongs
+ * to this graph, so it is always this graph that is read. Throws rather than send a request
+ * naming no graph, which the server would read from its own default graph instead. */
+function currentGraphName() {
+  const name = window.roamAlphaAPI.graph.name;
+  if (typeof name !== "string" || !name) throw new Error("Cannot tell which graph this is (roamAlphaAPI.graph.name).");
+  return name;
+}
+
 /* ---------------------------------------------------------------- commands */
 
 async function guarded(label, work) {
@@ -366,6 +376,7 @@ async function runExport(formatOverride, fixedUid) {
     ...parsedExtraFields(),
     ...(formatOverride ? { output_format: formatOverride } : {}),
     target: uid,
+    graph_name: currentGraphName(),
   };
   await executeExport(uid, body);
 }
@@ -427,7 +438,13 @@ async function submitExportOptions(outputFormat, workType, extraText, fixedUid) 
     return;
   }
   await guarded(OPTIONS_COMMAND_LABEL, () =>
-    executeExport(uid, { ...extra, output_format: outputFormat, work_type: workType, target: uid })
+    executeExport(uid, {
+      ...extra,
+      output_format: outputFormat,
+      work_type: workType,
+      target: uid,
+      graph_name: currentGraphName(),
+    })
   );
 }
 
@@ -443,7 +460,12 @@ async function runDump(fixedUid) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target: uid, console_format: "html", console_width: dumpWidth() }),
+      body: JSON.stringify({
+        target: uid,
+        graph_name: currentGraphName(),
+        console_format: "html",
+        console_width: dumpWidth(),
+      }),
     },
     timeoutSeconds()
   );

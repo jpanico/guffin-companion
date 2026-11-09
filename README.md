@@ -4,10 +4,11 @@ Export the open Roam page — or the zoomed-in block subtree — to **Markdown, 
 from Roam's command palette, rendered by [guffin](https://github.com/jpanico/guffin) running
 on the same machine.
 
-The extension is a thin client: it POSTs the open page/block's UID to a colocated
-`guffin-server` (guffin's HTTP front end) and hands the rendered document to the browser's
-save dialog. All the Roam connection specifics — Local API port, graph name, bearer token —
-live in the *server's* environment; the extension never sees, stores, or transmits the token.
+The extension is a thin client: it POSTs the open page/block's UID, and the name of the graph
+it runs in, to a colocated `guffin-server` (guffin's HTTP front end) and hands the rendered
+document to the browser's save dialog. One server serves every graph: it finds each graph's
+Local API token itself, in Roam's tools registry (`~/.roam-tools.json`), so the extension
+never sees, stores, or transmits a token.
 
 ## Requirements
 
@@ -19,18 +20,24 @@ live in the *server's* environment; the extension never sees, stores, or transmi
    guffin-server --allow-origin https://roamresearch.com
    ```
 
-   The server's environment must carry the Roam connection settings
-   (`GUFFIN_ROAM_LOCAL_API_PORT`, `GUFFIN_ROAM_GRAPH_NAME`, `GUFFIN_ROAM_API_TOKEN`).
+   The server's environment must carry the Local API port (`GUFFIN_ROAM_LOCAL_API_PORT`).
    Without `--allow-origin` the browser blocks this extension's requests — that is the
    server's deliberate default posture, and enabling it is read-side admission only, not
    authentication.
+3. **Each graph you use the extension in listed, with its Local API token, in Roam's tools
+   registry**, `~/.roam-tools.json` (connecting Roam's MCP server to a graph adds it there; the
+   file can also be edited by hand).
+   A graph the registry does not list can still be read if it is the server's default graph,
+   `GUFFIN_ROAM_GRAPH_NAME`, with its token in `GUFFIN_ROAM_API_TOKEN`.
 
 ## Install
 
-Not yet in Roam Depot. Load as a developer extension:
+Not yet in Roam Depot. Load as a developer extension, in each graph you want it in:
 
 1. Roam Desktop → Settings → **Roam Depot** → enable **developer mode**.
 2. **Load extension** → choose this directory.
+
+Every export and dump reads the graph the extension runs in.
 
 ## Commands
 
@@ -77,6 +84,11 @@ text — the same log lines, gate findings, and traceback a terminal invocation 
 
 - **"server unreachable"** — `guffin-server` isn't running, or was started without
   `--allow-origin https://roamresearch.com`.
+- **"no Local API token for graph '…'"** — the graph isn't listed in `~/.roam-tools.json`;
+  add it with its Local API token, created in Roam's settings.
+- **An extra field naming a token** — the "Extra export request fields" setting can carry
+  `api_bearer_token`, which the server uses ahead of the registry, but it then sits in the
+  extension's settings; prefer the registry.
 - **Export fails with a long error text** — that's guffin's own report (missing Roam
   connection env, semantics-gate violation, code-source drift, render error); read it as you
   would the CLI's output.

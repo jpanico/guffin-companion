@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 — 2026-11-08
+
+- Every export and dump request names the graph the extension runs in (`graph_name`, from
+  `roamAlphaAPI.graph.name`), so one `guffin-server` serves every graph. The server finds the
+  graph's Local API token in Roam's tools registry, `~/.roam-tools.json`, so the extension still
+  never holds a token. Before this, a request named no graph and the server read its own default
+  graph: in an edition-line graph, which shares the working graph's uids, an export silently
+  read the working graph instead. The extension's graph cannot be overridden through the extra
+  request fields. A guffin server older than this change sends the request's graph the
+  environment's token, which the Local API refuses for any graph but the server's default, so
+  update the two together.
+
 ## 0.4.6 — 2026-10-31
 
 - The export-options dialog pre-seeds `"snapshot": false` as the first of its extra request
